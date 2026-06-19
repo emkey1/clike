@@ -59,3 +59,23 @@ set(CLIKE_SOURCES
 
 add_executable(clike ${CLIKE_SOURCES})
 target_link_libraries(clike PRIVATE pscal_core_static Threads::Threads m)
+
+# ---- Install ----------------------------------------------------------------
+# `cmake --install build` puts `clike` on PATH and ships the examples and the
+# language docs beside it. The FetchContent dep (pscal-core) declares no install
+# rules of its own, so only CLike's targets are installed here.
+include(GNUInstallDirs)
+install(TARGETS clike RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/clike/examples)
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/
+        DESTINATION ${CMAKE_INSTALL_DOCDIR})
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR})
+
+# ---- Test -------------------------------------------------------------------
+# `ctest` runs the .cl conformance corpus in tests/ against the binary just built.
+enable_testing()
+add_test(NAME clike_tests COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tests/run.sh)
+set_tests_properties(clike_tests PROPERTIES
+    ENVIRONMENT "CLIKE_BIN=$<TARGET_FILE:clike>")
