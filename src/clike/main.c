@@ -108,6 +108,15 @@ static void clikeHandleSigint(int signo) {
 }
 
 static void clikeInstallSigint(void) {
+#if defined(PSCAL_TARGET_IOS)
+    /* The shell owns SIGINT centrally on iOS: it stays BLOCKED on every thread
+     * and a foreground Ctrl-C is consumed by the tool-runner (sigwait catcher
+     * -> SIGUSR1 worker poke -> siglongjmp; plus the VM abort flag this VM
+     * polls). Unblocking SIGINT or installing a competing per-frontend handler
+     * here reopened the race that left SIGINT at SIG_DFL and killed the whole
+     * shell, so this is a deliberate no-op. */
+    (void)clikeHandleSigint;
+#else
     sigset_t set;
     sigemptyset(&set);
     sigaddset(&set, SIGINT);
@@ -117,6 +126,7 @@ static void clikeInstallSigint(void) {
     sa.sa_handler = clikeHandleSigint;
     sigemptyset(&sa.sa_mask);
     sigaction(SIGINT, &sa, NULL);
+#endif
 }
 
 static const char *CLIKE_USAGE =
