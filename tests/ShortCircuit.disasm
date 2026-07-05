@@ -3,97 +3,97 @@
 Offset Line Opcode           Operand  Value / Target (Args)
 ------ ---- ---------------- -------- --------------------------
 0000    0 CONSTANT            1 'nil'
-0002    | DEFINE_GLOBAL    NameIdx:0   'myself' Type:POINTER ('')
-0007    1 JUMP               16 (to 0028)
+0002    | DEFINE_GLOBAL_SLOT Slot:0   'myself' Type:POINTER ('')
+0008    1 JUMP               16 (to 0029)
 
---- Function rhs1 (at 0012) ---
-0012    | CONST_0
-0013    | CONSTANT            3 'R1\n'
-0015    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0021    | CONST_0
-0022    | POP
-0023    | CONST_1
-0024    | RETURN
-0025    | GET_LOCAL           0 (slot)
-0027    | RETURN
-0028    2 JUMP               16 (to 0049)
+--- Function rhs1 (at 0013) ---
+0013    | CONST_0
+0014    | CONSTANT            3 'R1\n'
+0016    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0022    | CONST_0
+0023    | POP
+0024    | CONST_1
+0025    | RETURN
+0026    | GET_LOCAL           0 (slot)
+0028    | RETURN
+0029    2 JUMP               16 (to 0050)
 
---- Function rhs0 (at 0033) ---
-0033    | CONST_0
-0034    | CONSTANT            7 'R0\n'
-0036    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0042    | CONST_0
-0043    | POP
-0044    | CONST_0
-0045    | RETURN
-0046    | GET_LOCAL           0 (slot)
-0048    | RETURN
-0049    4 JUMP              148 (to 0202)
+--- Function rhs0 (at 0034) ---
+0034    | CONST_0
+0035    | CONSTANT            7 'R0\n'
+0037    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0043    | CONST_0
+0044    | POP
+0045    | CONST_0
+0046    | RETURN
+0047    | GET_LOCAL           0 (slot)
+0049    | RETURN
+0050    4 JUMP              148 (to 0203)
 
---- Function main (at 0054) ---
-0054    5 CONST_0
-0055    | JUMP_IF_FALSE      10 (to 0070)
-0060    | CALL_USER_PROC       8 'rhs1' @0012 (0 args)
-0064    | TO_BOOL
-0065    | JUMP                1 (to 0071)
-0070    | CONST_FALSE
-0071    | JUMP_IF_FALSE      11 (to 0087)
-0076    | CONST_0
-0077    | CONSTANT           10 'A\n'
-0079    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0085    | CONST_0
-0086    | POP
-0087    6 CONST_1
-0088    | JUMP_IF_FALSE       6 (to 0099)
-0093    | CONST_TRUE
-0094    | JUMP                5 (to 0104)
-0099    | CALL_USER_PROC       8 'rhs1' @0012 (0 args)
-0103    | TO_BOOL
-0104    | JUMP_IF_FALSE      11 (to 0120)
-0109    | CONST_0
-0110    | CONSTANT           12 'B\n'
-0112    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0118    | CONST_0
-0119    | POP
-0120    7 CONST_1
-0121    | JUMP_IF_FALSE      10 (to 0136)
-0126    | CALL_USER_PROC       8 'rhs1' @0012 (0 args)
-0130    | TO_BOOL
-0131    | JUMP                1 (to 0137)
-0136    | CONST_FALSE
-0137    | JUMP_IF_FALSE      11 (to 0153)
-0142    | CONST_0
-0143    | CONSTANT           14 'C\n'
-0145    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0151    | CONST_0
-0152    | POP
-0153    8 CONST_0
-0154    | JUMP_IF_FALSE       6 (to 0165)
-0159    | CONST_TRUE
-0160    | JUMP                5 (to 0170)
-0165    | CALL_USER_PROC      16 'rhs0' @0033 (0 args)
-0169    | TO_BOOL
-0170    | JUMP_IF_FALSE      11 (to 0186)
-0175    | CONST_0
-0176    | CONSTANT           17 'D\n'
-0178    | CALL_BUILTIN_PROC   181 'write' (2 args)
-0184    | CONST_0
-0185    | POP
-0186    9 CONSTANT           18 'vals:%d %d %d %d\n'
-0188    0 CONST_0
-0189    | CONST_1
+--- Function main (at 0055) ---
+0055    5 CONST_0
+0056    | JUMP_IF_FALSE      10 (to 0071)
+0061    | CALL_USER_PROC       8 'rhs1' @0013 (0 args)
+0065    | TO_BOOL
+0066    | JUMP                1 (to 0072)
+0071    | CONST_FALSE
+0072    | JUMP_IF_FALSE      11 (to 0088)
+0077    | CONST_0
+0078    | CONSTANT           10 'A\n'
+0080    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0086    | CONST_0
+0087    | POP
+0088    6 CONST_1
+0089    | JUMP_IF_FALSE       6 (to 0100)
+0094    | CONST_TRUE
+0095    | JUMP                5 (to 0105)
+0100    | CALL_USER_PROC       8 'rhs1' @0013 (0 args)
+0104    | TO_BOOL
+0105    | JUMP_IF_FALSE      11 (to 0121)
+0110    | CONST_0
+0111    | CONSTANT           12 'B\n'
+0113    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0119    | CONST_0
+0120    | POP
+0121    7 CONST_1
+0122    | JUMP_IF_FALSE      10 (to 0137)
+0127    | CALL_USER_PROC       8 'rhs1' @0013 (0 args)
+0131    | TO_BOOL
+0132    | JUMP                1 (to 0138)
+0137    | CONST_FALSE
+0138    | JUMP_IF_FALSE      11 (to 0154)
+0143    | CONST_0
+0144    | CONSTANT           14 'C\n'
+0146    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0152    | CONST_0
+0153    | POP
+0154    8 CONST_0
+0155    | JUMP_IF_FALSE       6 (to 0166)
+0160    | CONST_TRUE
+0161    | JUMP                5 (to 0171)
+0166    | CALL_USER_PROC      16 'rhs0' @0034 (0 args)
+0170    | TO_BOOL
+0171    | JUMP_IF_FALSE      11 (to 0187)
+0176    | CONST_0
+0177    | CONSTANT           17 'D\n'
+0179    | CALL_BUILTIN_PROC   181 'write' (2 args)
+0185    | CONST_0
+0186    | POP
+0187    9 CONSTANT           18 'vals:%d %d %d %d\n'
+0189    0 CONST_0
 0190    | CONST_1
 0191    | CONST_1
-0192    9 PUSH_IMM_I8         5
-0194    | CALL_HOST           3 (ID: 3)
-0196    | POP
-0197   10 CONST_0
-0198   11 RETURN
-0199    4 GET_LOCAL           0 (slot)
-0201    | RETURN
-0202    0 CALL_USER_PROC      20 'main' @0054 (0 args)
-0206    | POP
-0207    | HALT
+0192    | CONST_1
+0193    9 PUSH_IMM_I8         5
+0195    | CALL_HOST           3 (ID: 3)
+0197    | POP
+0198   10 CONST_0
+0199   11 RETURN
+0200    4 GET_LOCAL           0 (slot)
+0202    | RETURN
+0203    0 CALL_USER_PROC      20 'main' @0055 (0 args)
+0207    | POP
+0208    | HALT
 == End Disassembly: clike/ShortCircuit.cl ==
 
 Constants (21):\n  0000: STR   "myself"

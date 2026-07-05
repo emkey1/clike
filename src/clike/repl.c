@@ -6,6 +6,7 @@
 #include "clike/parser.h"
 #include "clike/translate.h"
 #include "compiler/compiler.h"
+#include "compiler/bytecode_link.h"
 #include "ast/ast.h"
 #include "clike/builtins.h"
 #include "clike/semantics.h"
@@ -153,9 +154,17 @@ int clike_repl_main(void) {
             AST *shared_ast = translateClikeToShared(prog);
             annotateTypes(shared_ast, NULL, shared_ast);
             compileASTToBytecode(shared_ast, &chunk);
-            VM vm; initVM(&vm);
-            interpretBytecode(&vm, &chunk, globalSymbols, constGlobalSymbols, procedure_table, 0);
-            freeVM(&vm);
+            // VM 2.0 Phase 2b (plan §5.7): the REPL never caches bytecode,
+            // so there's no save-before-link ordering concern here -- just
+            // link right after compiling, before execution.
+            char link_err[256];
+            if (!pscalLinkGlobalSlots(&chunk, link_err, sizeof(link_err))) {
+                fprintf(stderr, "Compiler error: failed to link global slots: %s\n", link_err);
+            } else {
+                VM vm; initVM(&vm);
+                interpretBytecode(&vm, &chunk, globalSymbols, constGlobalSymbols, procedure_table, 0);
+                freeVM(&vm);
+            }
             freeBytecodeChunk(&chunk);
         }
         freeASTClike(prog);

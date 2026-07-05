@@ -31,6 +31,7 @@
 #include <sys/types.h>
 #include <signal.h>
 #include "compiler/bytecode.h"
+#include "compiler/bytecode_link.h"
 #include "compiler/compiler.h"
 #include "ast/ast.h"
 #include "clike/parser.h"
@@ -387,6 +388,16 @@ int clike_main(int argc, char **argv) {
         annotateTypes(shared_ast, NULL, shared_ast);
         compileASTToBytecode(shared_ast, &chunk);
         saveBytecodeToCache(path, kClikeCompilerId, &chunk);
+        // VM 2.0 Phase 2b (plan §5.7): link AFTER saving to cache, never
+        // before -- see compiler.c's compileASTToBytecode() comment. Must
+        // also run before the disassembly below.
+        {
+            char link_err[256];
+            if (!pscalLinkGlobalSlots(&chunk, link_err, sizeof(link_err))) {
+                fprintf(stderr, "Compiler error: failed to link global slots: %s\n", link_err);
+                CLIKE_RETURN(EXIT_FAILURE);
+            }
+        }
         if (verbose_flag) {
             fprintf(stderr, "Compilation successful. Bytecode size: %d bytes, Constants: %d\n",
                     chunk.count, chunk.constants_count);
