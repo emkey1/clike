@@ -43,6 +43,7 @@
 #include "clike/opt.h"
 #include "clike/preproc.h"
 #include "vm/vm.h"
+#include "vm/vm_fx_policy.h"
 #include "core/cache.h"
 #include <pscal_paths.h>
 #include "core/utils.h"
@@ -229,6 +230,12 @@ int clike_main(int argc, char **argv) {
             verbose_flag = 1;
         } else if (strncmp(argv[i], "--vm-trace-head=", 16) == 0) {
             vm_trace_head = atoi(argv[i] + 16);
+        } else if (pscalFxIsCliFlag(argv[i])) {
+            const char *fx_value = (i + 1 < argc) ? argv[i + 1] : NULL;
+            if (!pscalFxHandleCliFlag(argv[i], fx_value)) {
+                CLIKE_RETURN(EXIT_FAILURE);
+            }
+            i++;
         } else if (argv[i][0] == '-') {
             fprintf(stderr, "Unknown option: %s\n%s\n", argv[i], CLIKE_USAGE);
             CLIKE_RETURN(EXIT_FAILURE);
