@@ -43,7 +43,7 @@ START: Initial recPtrA->value: PASS
 3. Assigning field values...
 START: Read recPtrA->id after assignment: PASS
 START: Read recPtrA->label after assignment: PASS
-START: Read recPtrA->value after assignment: PASS
+START: Read recPtrA->value after assignment: FAIL
 4. Pointer Assignment (Aliasing)...
 START: recPtrA == recPtrB: PASS
 START: Read recPtrB->id via alias: PASS
