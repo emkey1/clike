@@ -44,6 +44,7 @@
 #include "clike/preproc.h"
 #include "vm/vm.h"
 #include "vm/vm_fx_policy.h"
+#include "ext_builtins/plugin_loader.h"
 #include "core/cache.h"
 #include <pscal_paths.h>
 #include "core/utils.h"
@@ -233,6 +234,12 @@ int clike_main(int argc, char **argv) {
         } else if (pscalFxIsCliFlag(argv[i])) {
             const char *fx_value = (i + 1 < argc) ? argv[i + 1] : NULL;
             if (!pscalFxHandleCliFlag(argv[i], fx_value)) {
+                CLIKE_RETURN(EXIT_FAILURE);
+            }
+            i++;
+        } else if (pscalExtIsCliFlag(argv[i])) {
+            const char *ext_value = (i + 1 < argc) ? argv[i + 1] : NULL;
+            if (!pscalExtHandleCliFlag(argv[i], ext_value)) {
                 CLIKE_RETURN(EXIT_FAILURE);
             }
             i++;
