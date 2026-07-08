@@ -853,6 +853,43 @@ static VarType analyzeExpr(ASTNodeClike *node, ScopeStack *scopes) {
             } else if ((strcasecmp(name, "httpsession") == 0 || strcasecmp(name, "httprequest") == 0) &&
                        (t == TYPE_UNKNOWN || t == TYPE_VOID)) {
                 t = TYPE_INT32;
+            } else if (strcasecmp(name, "taskspawn") == 0) {
+                // VM 2.0 Phase 5a (Docs/pscal_vm2_plan.md Sec 6.1): variadic
+                // -- TaskSpawn(fn, args...) -- fn may be a function pointer
+                // (&func), a procedure-name string, or a raw entry offset,
+                // so only the arity floor is checked here; the VM builtin
+                // itself validates fn's shape at call time.
+                if (node->child_count < 1) {
+                    fprintf(stderr,
+                            "Type error: taskspawn expects at least 1 argument (a procedure or closure) at line %d, column %d\n",
+                            node->token.line, node->token.column);
+                    clike_error_count++;
+                }
+                t = TYPE_TASK;
+            } else if (strcasecmp(name, "taskawait") == 0) {
+                if (node->child_count != 1 || analyzeExpr(node->children[0], scopes) != TYPE_TASK) {
+                    fprintf(stderr,
+                            "Type error: taskawait expects (task) at line %d, column %d\n",
+                            node->token.line, node->token.column);
+                    clike_error_count++;
+                }
+                t = TYPE_INT32;
+            } else if (strcasecmp(name, "taskdone") == 0) {
+                if (node->child_count != 1 || analyzeExpr(node->children[0], scopes) != TYPE_TASK) {
+                    fprintf(stderr,
+                            "Type error: taskdone expects (task) at line %d, column %d\n",
+                            node->token.line, node->token.column);
+                    clike_error_count++;
+                }
+                t = TYPE_INT32;
+            } else if (strcasecmp(name, "taskcancel") == 0) {
+                if (node->child_count != 1 || analyzeExpr(node->children[0], scopes) != TYPE_TASK) {
+                    fprintf(stderr,
+                            "Type error: taskcancel expects (task) at line %d, column %d\n",
+                            node->token.line, node->token.column);
+                    clike_error_count++;
+                }
+                t = TYPE_INT32;
             } else if (strcasecmp(name, "channelcreate") == 0) {
                 if (node->child_count != 1) {
                     fprintf(stderr,
