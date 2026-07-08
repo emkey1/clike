@@ -825,7 +825,7 @@ static VarType analyzeExpr(ASTNodeClike *node, ScopeStack *scopes) {
                             node->token.line, node->token.column);
                     clike_error_count++;
                 }
-                t = TYPE_INT32;
+                t = TYPE_TASK;
             } else if ((strcasecmp(name, "httprequestasynctofile") == 0)) {
                 if (node->child_count != 5) {
                     fprintf(stderr,
@@ -833,19 +833,19 @@ static VarType analyzeExpr(ASTNodeClike *node, ScopeStack *scopes) {
                             node->token.line, node->token.column);
                     clike_error_count++;
                 }
-                t = TYPE_INT32;
+                t = TYPE_TASK;
             } else if (strcasecmp(name, "httptryawait") == 0) {
-                if (node->child_count != 2) {
+                if (node->child_count != 2 || analyzeExpr(node->children[0], scopes) != TYPE_TASK) {
                     fprintf(stderr,
-                            "Type error: httptryawait expects (id:int, out:mstream) at line %d, column %d\n",
+                            "Type error: httptryawait expects (id:task, out:mstream) at line %d, column %d\n",
                             node->token.line, node->token.column);
                     clike_error_count++;
                 }
                 t = TYPE_INT32;
             } else if (strcasecmp(name, "httpisdone") == 0) {
-                if (node->child_count != 1 || !isIntlikeType(analyzeExpr(node->children[0], scopes))) {
+                if (node->child_count != 1 || analyzeExpr(node->children[0], scopes) != TYPE_TASK) {
                     fprintf(stderr,
-                            "Type error: httpisdone expects (id:int) at line %d, column %d\n",
+                            "Type error: httpisdone expects (id:task) at line %d, column %d\n",
                             node->token.line, node->token.column);
                     clike_error_count++;
                 }

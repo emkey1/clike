@@ -2,7 +2,7 @@
 
 int main() {
   int s = httpsession();
-  int id = httprequestasync(s, "GET", "data:text/plain,HelloAsyncCL", NULL);
+  task id = httprequestasync(s, "GET", "data:text/plain,HelloAsyncCL", NULL);
   while (httpisdone(id) == 0) { delay(10); }
   mstream out = mstreamcreate();
   httpawait(id, out);

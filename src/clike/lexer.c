@@ -71,6 +71,7 @@ static ClikeToken identifierOrKeyword(ClikeLexer *lexer, const char *start, int 
     if (length == 6 && strncmp(start, "string", 6) == 0) return makeToken(lexer, CLIKE_TOKEN_STR, start, length, column);
     if (length == 4 && strncmp(start, "text", 4) == 0) return makeToken(lexer, CLIKE_TOKEN_TEXT, start, length, column);
     if (length == 7 && strncmp(start, "mstream", 7) == 0) return makeToken(lexer, CLIKE_TOKEN_MSTREAM, start, length, column);
+    if (length == 4 && strncmp(start, "task", 4) == 0) return makeToken(lexer, CLIKE_TOKEN_TASK, start, length, column);
     if (length == 4 && strncmp(start, "char", 4) == 0) return makeToken(lexer, CLIKE_TOKEN_CHAR, start, length, column);
     if (length == 4 && strncmp(start, "byte", 4) == 0) return makeToken(lexer, CLIKE_TOKEN_BYTE, start, length, column);
     if (length == 4 && strncmp(start, "word", 4) == 0) return makeToken(lexer, CLIKE_TOKEN_WORD, start, length, column);
@@ -275,6 +276,7 @@ const char* clikeTokenTypeToString(ClikeTokenType type) {
         case CLIKE_TOKEN_STR: return "TOKEN_STR";
         case CLIKE_TOKEN_TEXT: return "TOKEN_TEXT";
         case CLIKE_TOKEN_MSTREAM: return "TOKEN_MSTREAM";
+        case CLIKE_TOKEN_TASK: return "TOKEN_TASK";
         case CLIKE_TOKEN_IF: return "TOKEN_IF";
         case CLIKE_TOKEN_ELSE: return "TOKEN_ELSE";
         case CLIKE_TOKEN_WHILE: return "TOKEN_WHILE";
