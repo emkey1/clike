@@ -24,6 +24,7 @@ VarType clikeTokenTypeToVarType(ClikeTokenType t) {
         case CLIKE_TOKEN_TEXT:       return TYPE_FILE;
         case CLIKE_TOKEN_MSTREAM:    return TYPE_MEMORYSTREAM;
         case CLIKE_TOKEN_TASK:       return TYPE_TASK;
+        case CLIKE_TOKEN_CHANNEL:    return TYPE_CHANNEL;
         case CLIKE_TOKEN_VOID:       return TYPE_VOID;
         case CLIKE_TOKEN_CHAR:       return TYPE_CHAR;
         case CLIKE_TOKEN_BYTE:       return TYPE_BYTE;
@@ -70,6 +71,7 @@ const char *clikeTokenTypeToTypeName(ClikeTokenType t) {
         case CLIKE_TOKEN_TEXT:   return "text";
         case CLIKE_TOKEN_MSTREAM:return "mstream";
         case CLIKE_TOKEN_TASK:   return "task";
+        case CLIKE_TOKEN_CHANNEL:return "channel";
         case CLIKE_TOKEN_CHAR:   return "char";
         case CLIKE_TOKEN_BYTE:   return "byte";
         case CLIKE_TOKEN_WORD:   return "word";
@@ -513,7 +515,7 @@ static int isTypeToken(ClikeTokenType t) {
            t == CLIKE_TOKEN_FLOAT || t == CLIKE_TOKEN_DOUBLE ||
            t == CLIKE_TOKEN_LONG_DOUBLE || t == CLIKE_TOKEN_STR ||
            t == CLIKE_TOKEN_TEXT || t == CLIKE_TOKEN_MSTREAM ||
-           t == CLIKE_TOKEN_TASK ||
+           t == CLIKE_TOKEN_TASK || t == CLIKE_TOKEN_CHANNEL ||
            t == CLIKE_TOKEN_CHAR || t == CLIKE_TOKEN_BYTE ||
            t == CLIKE_TOKEN_WORD || t == CLIKE_TOKEN_UINT8 ||
            t == CLIKE_TOKEN_UINT16 || t == CLIKE_TOKEN_UINT32 ||

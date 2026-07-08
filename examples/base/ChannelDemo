@@ -1,0 +1,39 @@
+#!/usr/bin/env clike
+channel ch;
+
+void producer() {
+  int i;
+  for (i = 1; i <= 5; i++) {
+    channelsend(ch, 100 + i);
+  }
+  channelclose(ch);
+}
+
+int main() {
+  ch = channelcreate(2);
+  int tid = spawn producer();
+
+  int i;
+  int total = 0;
+  for (i = 1; i <= 5; i++) {
+    int v = channelreceive(ch);
+    total = total + v;
+    printf("received %d\n", v);
+  }
+  join tid;
+  printf("total=%d\n", total);
+
+  channel ch2 = channelcreate(3);
+  int sent = channeltrysend(ch2, 42);
+  printf("trysend status=%d\n", sent);
+
+  int status = 0;
+  int outVal = 0;
+  channeltryreceive(ch2, status, outVal);
+  printf("tryreceive status=%d value=%d\n", status, outVal);
+
+  channelclose(ch2);
+  printf("closed=%d\n", channelisclosed(ch2));
+
+  return 0;
+}

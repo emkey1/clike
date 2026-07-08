@@ -31,7 +31,7 @@ static VarType builtinReturnType(const char* name) {
 
     static const char *const booleanFuncs[] = {
         "bool", "tobool", "keypressed", "issoundplaying", "quitrequested",
-        "eof", "mstreamloadfromfile", "fileexists"
+        "eof", "mstreamloadfromfile", "fileexists", "channelisclosed"
     };
     if (builtinMatches(name, booleanFuncs, sizeof(booleanFuncs) / sizeof(booleanFuncs[0]))) {
         return TYPE_BOOLEAN;
@@ -853,6 +853,14 @@ static VarType analyzeExpr(ASTNodeClike *node, ScopeStack *scopes) {
             } else if ((strcasecmp(name, "httpsession") == 0 || strcasecmp(name, "httprequest") == 0) &&
                        (t == TYPE_UNKNOWN || t == TYPE_VOID)) {
                 t = TYPE_INT32;
+            } else if (strcasecmp(name, "channelcreate") == 0) {
+                if (node->child_count != 1) {
+                    fprintf(stderr,
+                            "Type error: channelcreate expects 1 argument at line %d, column %d\n",
+                            node->token.line, node->token.column);
+                    clike_error_count++;
+                }
+                t = TYPE_CHANNEL;
             }
             for (int i = 0; i < node->child_count; ++i) {
                 analyzeExpr(node->children[i], scopes);
