@@ -153,12 +153,14 @@ int clike_repl_main(void) {
             BytecodeChunk chunk; initBytecodeChunk(&chunk);
             AST *shared_ast = translateClikeToShared(prog);
             annotateTypes(shared_ast, NULL, shared_ast);
-            compileASTToBytecode(shared_ast, &chunk);
+            bool compiled_ok = compileASTToBytecode(shared_ast, &chunk);
             // VM 2.0 Phase 2b (plan §5.7): the REPL never caches bytecode,
             // so there's no save-before-link ordering concern here -- just
             // link right after compiling, before execution.
             char link_err[256];
-            if (!pscalLinkGlobalSlots(&chunk, link_err, sizeof(link_err))) {
+            if (!compiled_ok) {
+                fprintf(stderr, "Compilation failed with errors. Snippet not executed.\n");
+            } else if (!pscalLinkGlobalSlots(&chunk, link_err, sizeof(link_err))) {
                 fprintf(stderr, "Compiler error: failed to link global slots: %s\n", link_err);
             } else {
                 VM vm; initVM(&vm);

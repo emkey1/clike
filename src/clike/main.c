@@ -400,7 +400,16 @@ int clike_main(int argc, char **argv) {
          * bytecode compiler, mirroring the Rea front end. */
         AST *shared_ast = translateClikeToShared(prog);
         annotateTypes(shared_ast, NULL, shared_ast);
-        compileASTToBytecode(shared_ast, &chunk);
+        if (!compileASTToBytecode(shared_ast, &chunk)) {
+            fprintf(stderr, "Compilation failed with errors. Program not executed.\n");
+            freeBytecodeChunk(&chunk);
+            freeASTClike(prog);
+            clikeFreeStructs();
+            free(src);
+            if (pre_src) free(pre_src);
+            clikeResetSymbolState();
+            CLIKE_RETURN(EXIT_FAILURE);
+        }
         saveBytecodeToCache(path, kClikeCompilerId, &chunk);
         // VM 2.0 Phase 2b (plan §5.7): link AFTER saving to cache, never
         // before -- see compiler.c's compileASTToBytecode() comment. Must
