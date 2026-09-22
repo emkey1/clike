@@ -370,6 +370,7 @@ int clike_main(int argc, char **argv) {
     BytecodeChunk chunk;
     initBytecodeChunk(&chunk);
     bool used_cache = false;
+    const char* cache_miss_reason = NULL;  // else pscalCacheLastLoadError()
     if (!no_cache_flag) {
         used_cache = loadBytecodeFromCache(path, kClikeCompilerId, argv[0], (const char**)dep_paths, clike_import_count, &chunk);
     }
@@ -390,6 +391,7 @@ int clike_main(int argc, char **argv) {
             freeBytecodeChunk(&chunk);
             initBytecodeChunk(&chunk);
             used_cache = false;
+            cache_miss_reason = "the cache entry disappeared after loading";
         } else {
             for (int i = 0; i < clike_import_count && used_cache; ++i) {
                 struct stat dep_stat;
@@ -398,12 +400,16 @@ int clike_main(int argc, char **argv) {
                     freeBytecodeChunk(&chunk);
                     initBytecodeChunk(&chunk);
                     used_cache = false;
+                    cache_miss_reason = "an imported file is newer than the cache entry";
                     break;
                 }
             }
             free(cache_path);
         }
 #undef PSCAL_STAT_SEC
+    }
+    if (verbose_flag && !no_cache_flag && !used_cache) {
+        fprintf(stderr, "Cache miss: %s\n", cache_miss_reason ? cache_miss_reason : pscalCacheLastLoadError());
     }
     if (!used_cache) {
         /* Lower the CLike AST into the shared AST and drive the common
