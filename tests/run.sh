@@ -608,8 +608,8 @@ EOF
 }
 
 # --emit-bytecode writes a .pbc that pscalvm runs, and the same chunk is reused
-# from the bytecode cache. The program covers what used to break both: mstream
-# and str locals (constants the cache's codec could not encode), builtins that
+# from the bytecode cache. The program covers what used to break both: mstream,
+# str and struct locals (constants the cache's codec could not encode), builtins that
 # clike registered with a different kind than pscal-core (mstreamfree,
 # mstreamappendbyte, getdate), a void call in a loop (the load-time verifier's
 # call model), and mstreamloadfromfile used as a value.
@@ -620,6 +620,7 @@ clike_emit_bytecode_roundtrip_test() {
     src_dir=$(mktemp -d)
     printf 'hello' > "$src_dir/data.txt"
     cat > "$src_dir/EmitRoundTrip.cl" <<'EOF'
+struct Span { int lo; int hi; };
 int total = 0;
 void add(int v) { total = total + v; }
 
@@ -631,18 +632,21 @@ int sumTo(int n) {
 int main() {
     mstream ms = mstreamcreate();
     str content = "";
+    struct Span sp;
     int y, mo, d, dow;
     if (!mstreamloadfromfile(&ms, "data.txt")) { printf("load failed\n"); return 1; }
     content = mstreambuffer(ms);
     mstreamappendbyte(ms, 33);
     mstreamfree(&ms);
     getdate(&y, &mo, &d, &dow);
-    printf("%s %d %d\n", content, sumTo(4), y > 2000);
+    sp.lo = 2;
+    sp.hi = 3;
+    printf("%s %d %d %d\n", content, sumTo(4), y > 2000, sp.lo + sp.hi);
     return 0;
 }
 EOF
     shift_mtime "$src_dir/EmitRoundTrip.cl" -5
-    local expected="hello 10 1"
+    local expected="hello 10 1 5"
     local issues=()
 
     set +e
