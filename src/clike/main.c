@@ -139,6 +139,7 @@ static const char *CLIKE_USAGE =
     "     --dump-ast-json             Dump AST to JSON and exit.\n"
     "     --dump-bytecode             Dump compiled bytecode before execution.\n"
     "     --dump-bytecode-only        Dump compiled bytecode and exit (no execution).\n"
+    "     --emit-bytecode <out.pbc>   Compile to a bytecode file for pscalvm and exit (no execution).\n"
     "     --dump-ext-builtins         List extended builtin inventory and exit.\n"
     "     --no-cache                  Compile fresh (ignore cached bytecode).\n"
     "     --verbose                 Print compilation/cache status messages.\n"
@@ -196,6 +197,7 @@ int clike_main(int argc, char **argv) {
     int dump_ast_json_flag = 0;
     int dump_bytecode_flag = 0;
     int dump_bytecode_only_flag = 0;
+    const char *emit_bytecode_path = NULL;
     int dump_ext_builtins_flag = 0;
     int vm_trace_head = 0;
     int no_cache_flag = 0;
@@ -223,6 +225,14 @@ int clike_main(int argc, char **argv) {
         } else if (strcmp(argv[i], "--dump-bytecode-only") == 0) {
             dump_bytecode_flag = 1;
             dump_bytecode_only_flag = 1;
+        } else if (strcmp(argv[i], "--emit-bytecode") == 0) {
+            if (i + 1 >= argc) {
+                fprintf(stderr, "--emit-bytecode requires an output path\n%s\n", CLIKE_USAGE);
+                CLIKE_RETURN(EXIT_FAILURE);
+            }
+            emit_bytecode_path = argv[++i];
+            // A cached chunk comes back already linked; the file must be pre-link.
+            no_cache_flag = 1;
         } else if (strcmp(argv[i], "--dump-ext-builtins") == 0) {
             dump_ext_builtins_flag = 1;
         } else if (strcmp(argv[i], "--no-cache") == 0) {
@@ -411,6 +421,20 @@ int clike_main(int argc, char **argv) {
             CLIKE_RETURN(EXIT_FAILURE);
         }
         saveBytecodeToCache(path, kClikeCompilerId, &chunk);
+        // Written pre-link, like the cache: loadBytecodeFromFile() links once itself.
+        if (emit_bytecode_path) {
+            bool saved = saveBytecodeToFile(emit_bytecode_path, path, &chunk);
+            if (!saved) {
+                fprintf(stderr, "Failed to write bytecode to %s\n", emit_bytecode_path);
+            }
+            freeBytecodeChunk(&chunk);
+            freeASTClike(prog);
+            clikeFreeStructs();
+            free(src);
+            if (pre_src) free(pre_src);
+            clikeResetSymbolState();
+            CLIKE_RETURN(saved ? EXIT_SUCCESS : EXIT_FAILURE);
+        }
         // VM 2.0 Phase 2b (plan §5.7): link AFTER saving to cache, never
         // before -- see compiler.c's compileASTToBytecode() comment. Must
         // also run before the disassembly below.

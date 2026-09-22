@@ -607,6 +607,81 @@ EOF
     return 1
 }
 
+# --emit-bytecode writes a .pbc that pscalvm runs, and the same chunk is reused
+# from the bytecode cache. The program covers what used to break both: mstream
+# and str locals (constants the cache's codec could not encode), builtins that
+# clike registered with a different kind than pscal-core (mstreamfree,
+# mstreamappendbyte, getdate), a void call in a loop (the load-time verifier's
+# call model), and mstreamloadfromfile used as a value.
+clike_emit_bytecode_roundtrip_test() {
+    local pscalvm_bin="$1"
+    local tmp_home src_dir
+    tmp_home=$(mktemp -d)
+    src_dir=$(mktemp -d)
+    printf 'hello' > "$src_dir/data.txt"
+    cat > "$src_dir/EmitRoundTrip.cl" <<'EOF'
+int total = 0;
+void add(int v) { total = total + v; }
+
+int sumTo(int n) {
+    for (int i = 1; i <= n; i = i + 1) add(i);
+    return total;
+}
+
+int main() {
+    mstream ms = mstreamcreate();
+    str content = "";
+    int y, mo, d, dow;
+    if (!mstreamloadfromfile(&ms, "data.txt")) { printf("load failed\n"); return 1; }
+    content = mstreambuffer(ms);
+    mstreamappendbyte(ms, 33);
+    mstreamfree(&ms);
+    getdate(&y, &mo, &d, &dow);
+    printf("%s %d %d\n", content, sumTo(4), y > 2000);
+    return 0;
+}
+EOF
+    shift_mtime "$src_dir/EmitRoundTrip.cl" -5
+    local expected="hello 10 1"
+    local issues=()
+
+    set +e
+    (cd "$src_dir" && "$CLIKE_BIN" --emit-bytecode EmitRoundTrip.pbc EmitRoundTrip.cl > "$tmp_home/emit.out" 2>&1)
+    local emit_status=$?
+    local vm_out=""
+    local vm_status=0
+    if [ $emit_status -eq 0 ]; then
+        vm_out=$(cd "$src_dir" && "$pscalvm_bin" EmitRoundTrip.pbc 2>&1)
+        vm_status=$?
+    fi
+    local run1 run2
+    run1=$(cd "$src_dir" && HOME="$tmp_home" "$CLIKE_BIN" --verbose EmitRoundTrip.cl 2>&1)
+    run2=$(cd "$src_dir" && HOME="$tmp_home" "$CLIKE_BIN" --verbose EmitRoundTrip.cl 2>&1)
+    set -e
+
+    if [ $emit_status -ne 0 ]; then
+        issues+=("--emit-bytecode exited with $emit_status:\n$(cat "$tmp_home/emit.out")")
+    elif [ $vm_status -ne 0 ] || [ "$vm_out" != "$expected" ]; then
+        issues+=("pscalvm on the emitted .pbc (status $vm_status) printed:\n$vm_out")
+    fi
+    if ! printf '%s\n' "$run1" | grep -qx "$expected"; then
+        issues+=("clike run printed:\n$run1")
+    fi
+    if ! printf '%s\n' "$run2" | grep -q 'Loaded cached bytecode' ||
+       ! printf '%s\n' "$run2" | grep -qx "$expected"; then
+        issues+=("second run did not reuse the cached bytecode:\n$run2")
+    fi
+
+    rm -rf "$tmp_home" "$src_dir"
+
+    if [ ${#issues[@]} -eq 0 ]; then
+        return 0
+    fi
+
+    printf '%b\n' "${issues[@]}"
+    return 1
+}
+
 clike_cache_binary_staleness_test() {
     local tmp_home src_dir
     tmp_home=$(mktemp -d)
@@ -737,6 +812,17 @@ if details=$(clike_cache_reuse_test); then
     harness_report PASS "clike_cache_reuse" "Cache reuse surfaces bytecode reuse notice"
 else
     harness_report FAIL "clike_cache_reuse" "Cache reuse surfaces bytecode reuse notice" "$details"
+fi
+
+# Ahead of the staleness test, which pushes the clike binary's mtime into the
+# future and so makes any cache entry written in the next few seconds stale.
+CLIKE_PSCALVM_BIN="${PSCALVM_BIN:-$(dirname "$CLIKE_BIN")/pscalvm}"
+if [ ! -x "$CLIKE_PSCALVM_BIN" ]; then
+    harness_report SKIP "clike_emit_bytecode_roundtrip" "--emit-bytecode .pbc runs under pscalvm and caches" "pscalvm not found (set PSCALVM_BIN)"
+elif details=$(clike_emit_bytecode_roundtrip_test "$CLIKE_PSCALVM_BIN"); then
+    harness_report PASS "clike_emit_bytecode_roundtrip" "--emit-bytecode .pbc runs under pscalvm and caches"
+else
+    harness_report FAIL "clike_emit_bytecode_roundtrip" "--emit-bytecode .pbc runs under pscalvm and caches" "$details"
 fi
 
 if details=$(clike_cache_binary_staleness_test); then
