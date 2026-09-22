@@ -47,11 +47,15 @@ void clikeRegisterBuiltins(void) {
     registerBuiltinFunction("toupper", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("mstreamcreate", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("mstreamloadfromfile", AST_FUNCTION_DECL, NULL);
-    registerBuiltinFunction("mstreamsavetofile", AST_FUNCTION_DECL, NULL);
-    registerBuiltinFunction("mstreamfree", AST_FUNCTION_DECL, NULL);
+    /* Procedures, as pscal-core registers them. The kind picks the call
+     * opcode (CALL_BUILTIN_PROC vs CALL_BUILTIN + POP), and a .pbc run by
+     * pscalvm only has the core registrations -- a clike-only "function"
+     * here compiles a POP that underflows there, and fails verification. */
+    registerBuiltinFunction("mstreamsavetofile", AST_PROCEDURE_DECL, NULL);
+    registerBuiltinFunction("mstreamfree", AST_PROCEDURE_DECL, NULL);
     registerBuiltinFunction("mstreambuffer", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("mstreamfromstring", AST_FUNCTION_DECL, NULL);
-    registerBuiltinFunction("mstreamappendbyte", AST_FUNCTION_DECL, NULL);
+    registerBuiltinFunction("mstreamappendbyte", AST_PROCEDURE_DECL, NULL);
     registerBuiltinFunction("fileexists", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("filesize", AST_FUNCTION_DECL, NULL);
 
@@ -63,8 +67,8 @@ void clikeRegisterBuiltins(void) {
     registerBuiltinFunction("mkdir", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("rmdir", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("getenv", AST_FUNCTION_DECL, NULL);
-    registerBuiltinFunction("getdate", AST_FUNCTION_DECL, NULL);
-    registerBuiltinFunction("gettime", AST_FUNCTION_DECL, NULL);
+    registerBuiltinFunction("getdate", AST_PROCEDURE_DECL, NULL);  /* var params; see mstreamfree */
+    registerBuiltinFunction("gettime", AST_PROCEDURE_DECL, NULL);
     registerBuiltinFunction("socketpeeraddr", AST_FUNCTION_DECL, NULL);
 
     /* Math helpers */
