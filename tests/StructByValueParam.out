@@ -1,0 +1,6 @@
+in f 9 3
+g after f 1 2
+in f 9 3
+h after f 1 2
+g 7 h 1
+g 7 a 107
