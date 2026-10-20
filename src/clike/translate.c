@@ -282,10 +282,21 @@ static AST *xExpr(ASTNodeClike *n) {
         case TCAST_BINOP:
             return xBinop(n);
         case TCAST_UNOP: {
+            if (n->token.type == CLIKE_TOKEN_TILDE) {
+                /* `~x` is `x ^ -1`. It used to become the shared NOT, which is
+                 * logical (`~5` was 0, `~0` was 1). */
+                AST *x = mkNode(AST_BINARY_OP, TOKEN_XOR, "op", line);
+                setLeft(x, xExpr(n->left));
+                AST *ones = mkNode(AST_NUMBER, TOKEN_INTEGER_CONST, "-1", line);
+                ones->var_type = TYPE_INT64;
+                ones->i_val = -1;
+                setRight(x, ones);
+                x->var_type = n->var_type;
+                return x;
+            }
             TokenType tt = TOKEN_MINUS;
             const char *spell = "-";
             if (n->token.type == CLIKE_TOKEN_BANG) { tt = TOKEN_NOT; spell = "not"; }
-            else if (n->token.type == CLIKE_TOKEN_TILDE) { tt = TOKEN_NOT; spell = "not"; }
             AST *u = mkNode(AST_UNARY_OP, tt, spell, line);
             setLeft(u, xExpr(n->left));
             u->var_type = n->var_type;
