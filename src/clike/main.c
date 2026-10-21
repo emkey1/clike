@@ -141,7 +141,7 @@ static const char *CLIKE_USAGE =
     "     --dump-bytecode-only        Dump compiled bytecode and exit (no execution).\n"
     "     --emit-bytecode <out.pbc>   Compile to a bytecode file for pscalvm and exit (no execution).\n"
     "     --dump-ext-builtins         List extended builtin inventory and exit.\n"
-    "     --no-cache                  Compile fresh (ignore cached bytecode).\n"
+    "     --no-cache                  Compile fresh; neither read nor write cached bytecode.\n"
     "     --verbose                 Print compilation/cache status messages.\n"
     "     --vm-trace-head=N           Trace first N VM instructions (also enabled by 'trace on' in source).\n"
     "\n"
@@ -231,8 +231,6 @@ int clike_main(int argc, char **argv) {
                 CLIKE_RETURN(EXIT_FAILURE);
             }
             emit_bytecode_path = argv[++i];
-            // A cached chunk comes back already linked; the file must be pre-link.
-            no_cache_flag = 1;
         } else if (strcmp(argv[i], "--dump-ext-builtins") == 0) {
             dump_ext_builtins_flag = 1;
         } else if (strcmp(argv[i], "--no-cache") == 0) {
@@ -371,7 +369,9 @@ int clike_main(int argc, char **argv) {
     initBytecodeChunk(&chunk);
     bool used_cache = false;
     const char* cache_miss_reason = NULL;  // else pscalCacheLastLoadError()
-    if (!no_cache_flag) {
+    // A cached chunk comes back already linked; an emitted file must be pre-link.
+    bool skip_cache_load = no_cache_flag || emit_bytecode_path;
+    if (!skip_cache_load) {
         used_cache = loadBytecodeFromCache(path, kClikeCompilerId, argv[0], (const char**)dep_paths, clike_import_count, &chunk);
     }
     if (dep_paths) {
@@ -408,7 +408,7 @@ int clike_main(int argc, char **argv) {
         }
 #undef PSCAL_STAT_SEC
     }
-    if (verbose_flag && !no_cache_flag && !used_cache) {
+    if (verbose_flag && !skip_cache_load && !used_cache) {
         fprintf(stderr, "Cache miss: %s\n", cache_miss_reason ? cache_miss_reason : pscalCacheLastLoadError());
     }
     if (!used_cache) {
@@ -426,7 +426,7 @@ int clike_main(int argc, char **argv) {
             clikeResetSymbolState();
             CLIKE_RETURN(EXIT_FAILURE);
         }
-        saveBytecodeToCache(path, kClikeCompilerId, &chunk);
+        if (!no_cache_flag) saveBytecodeToCache(path, kClikeCompilerId, &chunk);
         // Written pre-link, like the cache: loadBytecodeFromFile() links once itself.
         if (emit_bytecode_path) {
             bool saved = saveBytecodeToFile(emit_bytecode_path, path, &chunk);
