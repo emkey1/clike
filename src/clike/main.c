@@ -419,14 +419,16 @@ int clike_main(int argc, char **argv) {
     if (verbose_flag && !skip_cache_load && !used_cache) {
         fprintf(stderr, "Cache miss: %s\n", cache_miss_reason ? cache_miss_reason : pscalCacheLastLoadError());
     }
+    AST *shared_ast = NULL;
     if (!used_cache) {
         /* Lower the CLike AST into the shared AST and drive the common
          * bytecode compiler, mirroring the Rea front end. */
-        AST *shared_ast = translateClikeToShared(prog);
+        shared_ast = translateClikeToShared(prog);
         annotateTypes(shared_ast, NULL, shared_ast);
         if (!compileASTToBytecode(shared_ast, &chunk)) {
             fprintf(stderr, "Compilation failed with errors. Program not executed.\n");
             freeBytecodeChunk(&chunk);
+            freeAST(shared_ast);
             freeASTClike(prog);
             clikeFreeStructs();
             free(src);
@@ -442,6 +444,7 @@ int clike_main(int argc, char **argv) {
                 fprintf(stderr, "Failed to write bytecode to %s\n", emit_bytecode_path);
             }
             freeBytecodeChunk(&chunk);
+            freeAST(shared_ast);
             freeASTClike(prog);
             clikeFreeStructs();
             free(src);
@@ -488,6 +491,7 @@ int clike_main(int argc, char **argv) {
     if (dump_bytecode_only_flag) {
         // Cleanup and exit without executing
         freeBytecodeChunk(&chunk);
+        freeAST(shared_ast);
         freeASTClike(prog);
         clikeFreeStructs();
         free(src);
@@ -509,6 +513,7 @@ int clike_main(int argc, char **argv) {
     g_sigint_vm = NULL;
     freeVM(&vm);
     freeBytecodeChunk(&chunk);
+    freeAST(shared_ast);
     freeASTClike(prog);
     clikeFreeStructs();
     free(src);

@@ -22,6 +22,7 @@ void clikeResetSymbolState(void) {
         freeHashTable(procedure_table);
         procedure_table = NULL;
     }
+    freeScopeTables();
     current_procedure_table = NULL;
 
     if (type_table) {
