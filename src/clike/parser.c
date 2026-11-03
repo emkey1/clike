@@ -177,22 +177,22 @@ ASTNodeClike* clikeSpawnStatement(ParserClike *p);
 ASTNodeClike* clikeJoinStatement(ParserClike *p);
 static ClikeToken parseStringLiteral(ParserClike *p);
 
-char **clike_imports = NULL;
-int clike_import_count = 0;
-static int clike_import_capacity = 0;
+PSCAL_THREAD_LOCAL char **clike_imports = NULL;
+PSCAL_THREAD_LOCAL int clike_import_count = 0;
+static PSCAL_THREAD_LOCAL int clike_import_capacity = 0;
 
 typedef struct {
     char *name;
     AST *ast; // core AST representing struct layout
 } ClikeStructDef;
 
-static ClikeStructDef *clike_structs = NULL;
-static int clike_struct_count = 0;
-static int clike_struct_capacity = 0;
+static PSCAL_THREAD_LOCAL ClikeStructDef *clike_structs = NULL;
+static PSCAL_THREAD_LOCAL int clike_struct_count = 0;
+static PSCAL_THREAD_LOCAL int clike_struct_capacity = 0;
 
 typedef struct { char *name; long long value; } ConstEntry;
-static ConstEntry const_table[256];
-static int const_count = 0;
+static PSCAL_THREAD_LOCAL ConstEntry const_table[256];
+static PSCAL_THREAD_LOCAL int const_count = 0;
 
 static char* copyName(const char *s, size_t len) {
     char *out = (char*)malloc(len + 1);

@@ -1,4 +1,5 @@
 #include "clike/semantics.h"
+#include "core/globals.h"
 #include "core/utils.h"
 #include "clike/errors.h"
 #include "clike/builtins.h"
@@ -147,7 +148,7 @@ typedef struct {
 } ScopeStack;
 
 // Holds global variable declarations so that functions can reference them.
-static VarTable globalVars = {0};
+static PSCAL_THREAD_LOCAL VarTable globalVars = {0};
 
 static void vtAdd(VarTable *t, const char *name, VarType type, ASTNodeClike *decl, int is_const) {
     t->entries[t->count].name = strdup(name);
@@ -245,8 +246,8 @@ typedef struct {
     int defined_column;
 } FuncEntry;
 
-static FuncEntry functions[256];
-static int functionCount = 0;
+static PSCAL_THREAD_LOCAL FuncEntry functions[256];
+static PSCAL_THREAD_LOCAL int functionCount = 0;
 
 static void registerFunctionSignature(char *name, VarType type,
                                       int has_definition, int line, int column) {

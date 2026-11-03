@@ -19,8 +19,8 @@
 #include "core/globals.h"
 #include "backend_ast/builtin.h"
 #include "common/frontend_kind.h"
-int clike_error_count = 0;
-int clike_warning_count = 0;
+PSCAL_THREAD_LOCAL int clike_error_count = 0;
+PSCAL_THREAD_LOCAL int clike_warning_count = 0;
 
 static void initSymbolSystemClike(void) {
     globalSymbols = createHashTable();

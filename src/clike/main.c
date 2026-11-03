@@ -58,8 +58,8 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-int clike_error_count = 0;
-int clike_warning_count = 0;
+PSCAL_THREAD_LOCAL int clike_error_count = 0;
+PSCAL_THREAD_LOCAL int clike_warning_count = 0;
 
 static void clikeApplyBgRedirectionFromEnv(void) {
 #if defined(PSCAL_TARGET_IOS)
@@ -100,7 +100,7 @@ static void initSymbolSystemClike(void) {
     current_procedure_table = procedure_table;
 }
 
-static VM *g_sigint_vm = NULL;
+static PSCAL_THREAD_LOCAL VM *g_sigint_vm = NULL;
 
 static void clikeHandleSigint(int signo) {
     (void)signo;
