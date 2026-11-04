@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "common/path_virtualization.h"
 
 typedef struct {
     char *data;

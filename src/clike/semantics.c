@@ -11,6 +11,7 @@
 #include <string.h>
 #include <strings.h>
 #include <limits.h>
+#include "common/path_virtualization.h"
 
 static int builtinMatches(const char *name, const char *const *candidates, size_t count) {
     for (size_t i = 0; i < count; ++i) {

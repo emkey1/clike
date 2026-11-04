@@ -136,6 +136,12 @@ static const char *CLIKE_USAGE =
 
 static const char *const kClikeCompilerId = "clike";
 
+static void freeImportPaths(char **paths, int count) {
+    if (!paths) return;
+    for (int i = 0; i < count; ++i) free(paths[i]);
+    free(paths);
+}
+
 int clike_main(int argc, char **argv) {
     /* Ensure a clean slate when clike is run in-process multiple times. */
     clikeInvalidateGlobalState();
@@ -319,11 +325,15 @@ int clike_main(int argc, char **argv) {
         CLIKE_RETURN(EXIT_FAILURE);
     }
 
+    // Kept for the save below: compiling can add to clike_imports, and the entry has to
+    // name the same files this load compares.
     char **dep_paths = NULL;
+    int dep_count = 0;
     if (clike_import_count > 0) {
         dep_paths = (char**)malloc(sizeof(char*) * clike_import_count);
         if (dep_paths) {
-            for (int i = 0; i < clike_import_count; ++i) {
+            dep_count = clike_import_count;
+            for (int i = 0; i < dep_count; ++i) {
                 dep_paths[i] = clikeResolveImportPath(clike_imports[i]);
                 if (!dep_paths[i]) dep_paths[i] = strdup(clike_imports[i]);
             }
@@ -336,11 +346,7 @@ int clike_main(int argc, char **argv) {
     // A cached chunk comes back already linked; an emitted file must be pre-link.
     bool skip_cache_load = no_cache_flag || emit_bytecode_path;
     if (!skip_cache_load) {
-        used_cache = loadBytecodeFromCache(path, kClikeCompilerId, argv[0], (const char**)dep_paths, clike_import_count, &chunk);
-    }
-    if (dep_paths) {
-        for (int i = 0; i < clike_import_count; ++i) free(dep_paths[i]);
-        free(dep_paths);
+        used_cache = loadBytecodeFromCache(path, kClikeCompilerId, argv[0], (const char**)dep_paths, dep_count, &chunk);
     }
     if (used_cache) {
 #if defined(__APPLE__)
@@ -390,9 +396,14 @@ int clike_main(int argc, char **argv) {
             free(src);
             if (pre_src) free(pre_src);
             clikeResetSymbolState();
+            freeImportPaths(dep_paths, dep_count);
             CLIKE_RETURN(EXIT_FAILURE);
         }
-        if (!no_cache_flag) saveBytecodeToCache(path, kClikeCompilerId, &chunk);
+        if (!no_cache_flag) {
+            saveBytecodeToCacheWithDependencies(path, kClikeCompilerId, (const char**)dep_paths, dep_count, &chunk);
+        }
+        freeImportPaths(dep_paths, dep_count);
+        dep_paths = NULL;
         // Written pre-link, like the cache: loadBytecodeFromFile() links once itself.
         if (emit_bytecode_path) {
             bool saved = saveBytecodeToFile(emit_bytecode_path, path, &chunk);
@@ -431,6 +442,7 @@ int clike_main(int argc, char **argv) {
             }
         }
     } else {
+        freeImportPaths(dep_paths, dep_count);
         if (verbose_flag) {
             fprintf(stderr, "Loaded cached bytecode. Bytecode size: %d bytes, Constants: %d\n",
                     chunk.count, chunk.constants_count);
