@@ -829,6 +829,40 @@ else
     harness_report FAIL "clike_emit_bytecode_roundtrip" "--emit-bytecode .pbc runs under pscalvm and caches" "$details"
 fi
 
+# The binary finds <dir above it>/lib/clike, from any directory. Only for this
+# repo's own build: the umbrella's iOS flavour maps host paths.
+clike_module_beside_binary_test() {
+    local prefix work out rc=0
+    prefix=$(mktemp -d)
+    work=$(mktemp -d)
+    mkdir -p "$prefix/bin" "$prefix/lib/clike"
+    cp "$CLIKE_BIN" "$prefix/bin/clike"
+    cat > "$prefix/lib/clike/beside_module.cl" <<'EOF'
+int besideValue() { return 42; }
+EOF
+    cat > "$work/main.cl" <<'EOF'
+import "beside_module.cl";
+int main() {
+    printf("%d\n", besideValue());
+    return 0;
+}
+EOF
+    out=$(cd "$work" && env -u CLIKE_LIB_DIR "$prefix/bin/clike" --no-cache main.cl 2>&1) || rc=$?
+    rm -rf "$prefix" "$work"
+    if [ "$rc" -ne 0 ] || [ "$out" != "42" ]; then
+        printf 'exit %s, output: %s\n' "$rc" "$out"
+        return 1
+    fi
+}
+
+if [ ! "$CLIKE_BIN" -ef "$BUILD_DIR/clike" ]; then
+    harness_report SKIP "clike_module_beside_binary" "A module in lib/clike above the binary is found" "needs this repo's own build"
+elif details=$(clike_module_beside_binary_test); then
+    harness_report PASS "clike_module_beside_binary" "A module in lib/clike above the binary is found"
+else
+    harness_report FAIL "clike_module_beside_binary" "A module in lib/clike above the binary is found" "$details"
+fi
+
 if details=$(clike_cache_binary_staleness_test); then
     harness_report PASS "clike_cache_binary_staleness" "Binary timestamp invalidates cached bytecode"
 else

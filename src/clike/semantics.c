@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <limits.h>
 
 static int builtinMatches(const char *name, const char *const *candidates, size_t count) {
     for (size_t i = 0; i < count; ++i) {
@@ -1216,26 +1217,9 @@ void analyzeSemanticsClike(ASTNodeClike *program, const char *current_path) {
             continue;
         }
         const char *path = orig_path;
-        char *allocated_path = NULL;
-        FILE *f = fopen(path, "rb");
-        if (!f) {
-            const char *lib_dir = getenv("CLIKE_LIB_DIR");
-            if (lib_dir && *lib_dir) {
-                size_t len = strlen(lib_dir) + 1 + strlen(orig_path) + 1;
-                allocated_path = (char *)malloc(len);
-                snprintf(allocated_path, len, "%s/%s", lib_dir, orig_path);
-                f = fopen(allocated_path, "rb");
-                if (f) path = allocated_path; else { free(allocated_path); allocated_path = NULL; }
-            }
-        }
-        if (!f) {
-            const char *default_dir = PSCAL_CLIKE_LIB_DIR;
-            size_t len = strlen(default_dir) + 1 + strlen(orig_path) + 1;
-            allocated_path = (char *)malloc(len);
-            snprintf(allocated_path, len, "%s/%s", default_dir, orig_path);
-            f = fopen(allocated_path, "rb");
-            if (f) path = allocated_path; else { free(allocated_path); allocated_path = NULL; }
-        }
+        char *allocated_path = clikeResolveImportPath(orig_path);
+        FILE *f = allocated_path ? fopen(allocated_path, "rb") : NULL;
+        if (f) path = allocated_path;
         if (!f) {
             fprintf(stderr, "Could not open import '%s'\n", orig_path);
             modules[i].prog = NULL;
@@ -1369,6 +1353,34 @@ void analyzeSemanticsClike(ASTNodeClike *program, const char *current_path) {
         free(functions[i].name);
         functions[i].name = NULL;
     }
+}
+
+static char *clikeImportInDir(const char *dir, const char *orig_path) {
+    size_t len = strlen(dir) + 1 + strlen(orig_path) + 1;
+    char *path = (char *)malloc(len);
+    if (!path) return NULL;
+    snprintf(path, len, "%s/%s", dir, orig_path);
+    FILE *f = fopen(path, "rb");
+    if (f) { fclose(f); return path; }
+    free(path);
+    return NULL;
+}
+
+char *clikeResolveImportPath(const char *orig_path) {
+    FILE *f = fopen(orig_path, "rb");
+    if (f) { fclose(f); return strdup(orig_path); }
+    char *path = NULL;
+    const char *lib_dir = getenv("CLIKE_LIB_DIR");
+    if (lib_dir && *lib_dir) {
+        path = clikeImportInDir(lib_dir, orig_path);
+        if (path) return path;
+    }
+    char beside_binary[PATH_MAX];
+    if (pscalLibDirBesideExecutable("clike", beside_binary, sizeof(beside_binary))) {
+        path = clikeImportInDir(beside_binary, orig_path);
+        if (path) return path;
+    }
+    return clikeImportInDir(PSCAL_CLIKE_LIB_DIR, orig_path);
 }
 
 void clikeResetSemanticsState(void) {

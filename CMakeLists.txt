@@ -100,6 +100,8 @@ target_link_libraries(clike PRIVATE pscal_core_static Threads::Threads m)
 # rules of its own, so only CLike's targets are installed here.
 include(GNUInstallDirs)
 install(TARGETS clike RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+# CLike finds these as <dir above the binary>/lib/clike, wherever --prefix points.
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/lib/clike/ DESTINATION lib/clike)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/examples/
         DESTINATION ${CMAKE_INSTALL_DATADIR}/clike/examples)
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/docs/

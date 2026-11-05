@@ -654,30 +654,8 @@ static void translateImports(AST *decls) {
     for (int i = 0; i < clike_import_count; i++) {
         const char *orig = clike_imports[i];
         if (!orig) continue;
-        char *alloc = NULL;
-        FILE *f = fopen(orig, "rb");
-        if (!f) {
-            const char *libdir = getenv("CLIKE_LIB_DIR");
-            if (libdir && *libdir) {
-                size_t len = strlen(libdir) + 1 + strlen(orig) + 1;
-                alloc = (char *)malloc(len);
-                if (alloc) {
-                    snprintf(alloc, len, "%s/%s", libdir, orig);
-                    f = fopen(alloc, "rb");
-                    if (!f) { free(alloc); alloc = NULL; }
-                }
-            }
-        }
-        if (!f) {
-            const char *def = PSCAL_CLIKE_LIB_DIR;
-            size_t len = strlen(def) + 1 + strlen(orig) + 1;
-            alloc = (char *)malloc(len);
-            if (alloc) {
-                snprintf(alloc, len, "%s/%s", def, orig);
-                f = fopen(alloc, "rb");
-                if (!f) { free(alloc); alloc = NULL; }
-            }
-        }
+        char *alloc = clikeResolveImportPath(orig);
+        FILE *f = alloc ? fopen(alloc, "rb") : NULL;
         if (!f) {
             fprintf(stderr, "Could not open import '%s'\n", orig);
             continue;

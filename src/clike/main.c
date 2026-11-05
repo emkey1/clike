@@ -136,31 +136,6 @@ static const char *CLIKE_USAGE =
 
 static const char *const kClikeCompilerId = "clike";
 
-static char* resolveImportPath(const char* orig_path) {
-    FILE *f = fopen(orig_path, "rb");
-    if (f) { fclose(f); return strdup(orig_path); }
-    const char *lib_dir = getenv("CLIKE_LIB_DIR");
-    if (lib_dir && *lib_dir) {
-        size_t len = strlen(lib_dir) + 1 + strlen(orig_path) + 1;
-        char *path = (char*)malloc(len);
-        if (path) {
-            snprintf(path, len, "%s/%s", lib_dir, orig_path);
-            f = fopen(path, "rb");
-            if (f) { fclose(f); return path; }
-            free(path);
-        }
-    }
-    const char *default_dir = PSCAL_CLIKE_LIB_DIR;
-    size_t len = strlen(default_dir) + 1 + strlen(orig_path) + 1;
-    char *path = (char*)malloc(len);
-    if (!path) return NULL;
-    snprintf(path, len, "%s/%s", default_dir, orig_path);
-    f = fopen(path, "rb");
-    if (f) { fclose(f); return path; }
-    free(path);
-    return NULL;
-}
-
 int clike_main(int argc, char **argv) {
     /* Ensure a clean slate when clike is run in-process multiple times. */
     clikeInvalidateGlobalState();
@@ -349,7 +324,7 @@ int clike_main(int argc, char **argv) {
         dep_paths = (char**)malloc(sizeof(char*) * clike_import_count);
         if (dep_paths) {
             for (int i = 0; i < clike_import_count; ++i) {
-                dep_paths[i] = resolveImportPath(clike_imports[i]);
+                dep_paths[i] = clikeResolveImportPath(clike_imports[i]);
                 if (!dep_paths[i]) dep_paths[i] = strdup(clike_imports[i]);
             }
         }

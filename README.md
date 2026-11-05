@@ -31,7 +31,8 @@ with.
 cmake --install build --prefix /usr/local
 ```
 
-This puts the `clike` binary in `<prefix>/bin`, the example programs in
+This puts the `clike` binary in `<prefix>/bin`, its library modules in
+`<prefix>/lib/clike`, the example programs in
 `<prefix>/share/clike/examples`, and the language docs in
 `<prefix>/share/doc/clike`. The fetched dependency (pscal-core) declares no
 install rules, so only CLike's own artifacts are installed.
