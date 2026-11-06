@@ -479,6 +479,7 @@ int clike_main(int argc, char **argv) {
     g_sigint_vm = &vm;
     InterpretResult result = interpretBytecode(&vm, &chunk, globalSymbols, constGlobalSymbols, procedure_table, 0);
     g_sigint_vm = NULL;
+    bool interrupted = result != INTERPRET_OK && vmRunWasInterrupted(&vm);   // Ctrl-C, not an error
     freeVM(&vm);
     freeBytecodeChunk(&chunk);
     freeAST(shared_ast);
@@ -487,7 +488,7 @@ int clike_main(int argc, char **argv) {
     free(src);
     if (pre_src) free(pre_src);
     clikeResetSymbolState();
-    CLIKE_RETURN(result == INTERPRET_OK ? EXIT_SUCCESS : EXIT_FAILURE);
+    CLIKE_RETURN(result == INTERPRET_OK ? EXIT_SUCCESS : (interrupted ? 128 + SIGINT : EXIT_FAILURE));
 }
 #undef CLIKE_RETURN
 
