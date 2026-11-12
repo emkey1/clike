@@ -24,6 +24,8 @@
 #include "ast/ast.h"
 #include "core/types.h"
 #include "core/utils.h"
+#include "core/globals.h"
+#include "symbol/symbol.h"
 #include <pscal_paths.h>
 
 #include <stdio.h>
@@ -602,6 +604,14 @@ static AST *xFunction(ASTNodeClike *f) {
         }
     }
 
+    /* A prototype (`int f(int);`) has no body: the shared compiler takes it
+     * as a forward declaration and compiles nothing for it. */
+    if (!f->right) {
+        fn->is_forward_decl = true;
+        if (!isVoid) setRight(fn, xTypeNode(f, f->token.line));
+        return fn;
+    }
+
     AST *body = xStmt(f->right);
     if (isVoid) {
         setRight(fn, body);
@@ -681,6 +691,55 @@ static void translateImports(AST *decls) {
     }
 }
 
+/* C functions are file-scope: any function may call one defined further down
+ * the file, or in a module imported after it. The shared compiler resolves a
+ * call through the procedure table, which Pascal's parser and Rea's semantic
+ * pass fill before compiling; nothing filled it for CLike, so a call compiled
+ * ahead of its callee's body became a global-variable load and failed at run
+ * time with "Undefined global variable". Declare every routine up front, the
+ * way Pascal's addProcedure does; compiling each body then defines it. */
+static void declareRoutinesAhead(AST *decls) {
+    if (!decls || !procedure_table) return;
+    for (int i = 0; i < decls->child_count; i++) {
+        AST *d = decls->children[i];
+        if (!d || (d->type != AST_FUNCTION_DECL && d->type != AST_PROCEDURE_DECL)) continue;
+        if (!d->token || !d->token->value) continue;
+        char lower[MAX_SYMBOL_LENGTH];
+        strncpy(lower, d->token->value, sizeof(lower) - 1);
+        lower[sizeof(lower) - 1] = '\0';
+        toLowerString(lower);
+        Symbol *have = hashTableLookup(procedure_table, lower);
+        if (have) {
+            /* A prototype came first: the definition's declaration replaces it. */
+            if (!d->is_forward_decl && have->type_def && have->type_def->is_forward_decl &&
+                !have->is_defined) {
+                AST *copy = copyAST(d);
+                if (copy) {
+                    freeAST(have->type_def);
+                    have->type_def = copy;
+                    have->type = d->var_type;
+                    have->arity = (uint8_t)d->child_count;
+                }
+            }
+            continue;
+        }
+        Symbol *sym = (Symbol *)calloc(1, sizeof(Symbol));
+        if (!sym) continue;
+        sym->name = strdup(lower);
+        sym->type_def = copyAST(d);
+        if (!sym->name || !sym->type_def) {
+            free(sym->name);
+            if (sym->type_def) freeAST(sym->type_def);
+            free(sym);
+            continue;
+        }
+        sym->type = d->var_type;
+        sym->arity = (uint8_t)d->child_count;
+        sym->is_defined = false;
+        hashTableInsert(procedure_table, sym);
+    }
+}
+
 /* ------------------------------------------------------------------ */
 /* Program root                                                       */
 /* ------------------------------------------------------------------ */
@@ -719,6 +778,8 @@ AST *translateClikeToShared(ASTNodeClike *program) {
             addChild(decls, xFunction(d));
         }
     }
+
+    declareRoutinesAhead(decls);
 
     /* Program body: call main(). */
     AST *callMain = mkNode(AST_PROCEDURE_CALL, TOKEN_IDENTIFIER, "main", 0);

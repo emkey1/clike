@@ -245,7 +245,7 @@ int isDirectory(str path) {
 
 int copyFile(str src, str dst) {
   mstream ms = mstreamcreate();
-  int loaded = mstreamloadfromfile(&ms, src);
+  int loaded = fileexists(src) && mstreamloadfromfile(&ms, src);
   if (!loaded) {
     mstreamfree(&ms);
     return 0;
@@ -305,8 +305,8 @@ void serveConn(int c) {
     fflush();
   }
   // Parse request line robustly: take first line then split by spaces
-  int ln = pos(reqText, "\r\n");
-  if (ln == 0) ln = pos(reqText, "\n");
+  int ln = pos("\r\n", reqText);
+  if (ln == 0) ln = pos("\n", reqText);
   str firstLine = (ln > 0) ? copy(reqText, 1, ln - 1) : reqText;
   // Manually parse method and path from firstLine to avoid any pos/copy off-by-one
   int flen = length(firstLine);
@@ -321,7 +321,7 @@ void serveConn(int c) {
   while (i <= flen && copy(firstLine, i, 1) != " ") i = i + 1;
   str path = (pstart <= flen && i > pstart) ? copy(firstLine, pstart, i - pstart) : "/";
   // Strip query string
-  int qidx = pos(path, "?");
+  int qidx = pos("?", path);
   if (qidx > 0) path = copy(path, 1, qidx - 1);
   // Percent-decode the URL path
   path = decodePercent(path);
@@ -335,7 +335,7 @@ void serveConn(int c) {
     // Try to serve index.html directly; fall back to listing if read fails.
     str fullPath = IndexPath;
     mstream ms = mstreamcreate();
-    int ok = mstreamloadfromfile(&ms, fullPath);
+    int ok = fileexists(fullPath) && mstreamloadfromfile(&ms, fullPath);
     if (ok) {
       respBody = mstreambuffer(ms);
       code = 200;
@@ -360,7 +360,7 @@ void serveConn(int c) {
   } else if (path == "/index.html") {
     // Attempt to serve on-disk index.html; fall back to default Body.
     mstream ms = mstreamcreate();
-    int ok = mstreamloadfromfile(&ms, IndexPath);
+    int ok = fileexists(IndexPath) && mstreamloadfromfile(&ms, IndexPath);
     if (ok) {
       respBody = mstreambuffer(ms);
       code = 200;
@@ -389,7 +389,7 @@ void serveConn(int c) {
       fflush();
     }
     mstream ms = mstreamcreate();
-    int ok = mstreamloadfromfile(&ms, fullPath);
+    int ok = fileexists(fullPath) && mstreamloadfromfile(&ms, fullPath);
     if (ok) {
       respBody = mstreambuffer(ms);
       code = 200;
@@ -581,7 +581,7 @@ str resolveAssetRoot() {
   str candidate = ConfiguredAssetRoot;
   str placeholder = "@PSCAL_INSTALL_ROOT_RESOLVED@";
   int placeholderLen = length(placeholder);
-  int idx = pos(candidate, placeholder);
+  int idx = pos(placeholder, candidate);
   if (idx > 0) {
     str envRoot = getenv("PSCAL_INSTALL_ROOT_RESOLVED");
     if (envRoot == "") envRoot = getenv("PSCAL_INSTALL_ROOT");
