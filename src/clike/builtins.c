@@ -67,6 +67,8 @@ void clikeRegisterBuiltins(void) {
     registerBuiltinFunction("mkdir", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("rmdir", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("getenv", AST_FUNCTION_DECL, NULL);
+    registerBuiltinFunction("strinsert", AST_FUNCTION_DECL, NULL);
+    registerBuiltinFunction("strdelete", AST_FUNCTION_DECL, NULL);
     registerBuiltinFunction("getdate", AST_PROCEDURE_DECL, NULL);  /* var params; see mstreamfree */
     registerBuiltinFunction("gettime", AST_PROCEDURE_DECL, NULL);
     registerBuiltinFunction("socketpeeraddr", AST_FUNCTION_DECL, NULL);

@@ -44,7 +44,7 @@ static VarType builtinReturnType(const char* name) {
         "inttostr", "realtostr", "formatfloat", "paramstr", "copy", "getenv", "dosgetenv",
         "findfirst", "findnext", "dosfindfirst", "dosfindnext", "mstreambuffer",
         "dnslookup", "apireceive", "jsonget", "httpgetheader", "socketpeeraddr", "trim",
-        "httpgetlastheaders", "httplasterror"
+        "httpgetlastheaders", "httplasterror", "strinsert", "strdelete"
     };
     if (builtinMatches(name, stringFuncs, sizeof(stringFuncs) / sizeof(stringFuncs[0]))) {
         return TYPE_UNICODE_STRING;
